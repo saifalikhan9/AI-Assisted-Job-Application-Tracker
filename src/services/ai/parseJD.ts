@@ -21,6 +21,7 @@ export async function parseJobDescription(jd: string): Promise<ParsedJD> {
   Rules:
   - If unknown, use empty string "" or empty array []
   - Do NOT add extra text
+  - If there is Expirence given more that 2 + years then give Mid-Level seniority
   
   Job Description:
   ${jd}
@@ -39,7 +40,6 @@ export async function parseJobDescription(jd: string): Promise<ParsedJD> {
 
     const content = response?.choices[0]?.message?.content as string;
 
-   
     const jsonMatch = content.match(/\{[\s\S]*\}/);
 
     if (!jsonMatch) {
@@ -48,7 +48,6 @@ export async function parseJobDescription(jd: string): Promise<ParsedJD> {
 
     const parsed = JSON.parse(jsonMatch[0]);
 
-    
     return {
       company: typeof parsed.company === "string" ? parsed.company : "Unknown",
       role: typeof parsed.role === "string" ? parsed.role : "Unknown",

@@ -102,7 +102,7 @@ export const POST = async (req: NextRequest) => {
       seniority,
       requiredSkills,
       niceToHaveSkills,
-      suggestions,
+      suggestions,  
       jdLink,
       notes,
       salaryMin,
