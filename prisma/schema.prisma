@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../prisma/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ApplicationStatus {
+  APPLIED
+  PHONE_SCREEN
+  INTERVIEW
+  OFFER
+  REJECTED
+}
+
+model User {
+  id       String @id @default(uuid())
+  email    String @unique
+  password String // hashed using bcrypt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  applications Application[]
+}
+
+model Application {
+  id String @id @default(uuid())
+
+  // 🔗 Relation
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 🧾 Basic Info
+  company   String
+  role      String
+  location  String?
+  seniority String?
+
+  // 🤖 AI Extracted
+  requiredSkills   String[]
+  niceToHaveSkills String[]
+
+  // ✨ AI Suggestions
+  suggestions String[]
+
+  // 📝 Manual Fields
+  jdLink String?
+  notes  String?
+
+  salaryMin Int?
+  salaryMax Int?
+
+  // 📊 Kanban Status
+  status ApplicationStatus @default(APPLIED)
+
+  appliedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status])
+}
