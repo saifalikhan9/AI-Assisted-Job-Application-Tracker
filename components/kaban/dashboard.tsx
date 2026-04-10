@@ -21,8 +21,8 @@ export default function KanbanMock({
   initialData: GroupedApplications<Application>;
 }) {
   const router = useRouter();
-  const draggedItem = useRef();
-  const draggedContainer = useRef();
+  const draggedItem = useRef<Application | null>(null);
+  const draggedContainer = useRef<string | null>(null);
 
   const [isOpen, setIsOpen] = useState(false);
   const [JD, setJD] = useState("");
@@ -91,27 +91,88 @@ export default function KanbanMock({
     }
   }
 
-  function handleDragStart(e, item, status) {
+  function handleDragStart(
+    e: React.DragEvent<HTMLDivElement>,
+    item: Application,
+    status: string,
+  ) {
     draggedItem.current = item;
     draggedContainer.current = status;
-    e.target.style.opacity = 0;
+    e.currentTarget.style.opacity = "0.5";
   }
-  function handleDragEnd(e, item, status) {
-    e.target.style.opacity = 1;
+  function handleDragEnd(
+    e: React.DragEvent<HTMLDivElement>,
+    item: Application,
+    status: string,
+  ) {
+    e.currentTarget.style.opacity = "1";
   }
 
-  function handleDrop(e, targetContainer) {
+  async function handleDrop(
+    e: React.DragEvent<HTMLDivElement>,
+    targetContainer: keyof GroupedApplications<Application>,
+  ) {
+    e.preventDefault();
+
     const item = draggedItem.current;
-    const sourceContainer = draggedContainer.current;
+    const sourceContainer =
+      draggedContainer.current as keyof GroupedApplications<Application>;
 
+    if (!item || !sourceContainer) return;
+
+    // ❗ prevent same column drop
+    if (sourceContainer === targetContainer) {
+      draggedItem.current = null;
+      draggedContainer.current = null;
+      return;
+    }
+
+    // 🔥 optimistic UI update
     setData((prev) => {
       const newData = { ...prev };
+
       newData[sourceContainer] = newData[sourceContainer].filter(
-        (i) => i !== item,
+        (i) => i.id !== item.id,
       );
+
       newData[targetContainer] = [...newData[targetContainer], item];
+
       return newData;
     });
+
+    // 🔥 backend sync
+    try {
+      const res = await fetch(`/api/applications/${item.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: targetContainer }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to update");
+      }
+      alert("success");
+    } catch (error) {
+      console.error(error);
+      alert("failed to make api call");
+      setData((prev) => {
+        const newData = { ...prev };
+
+        newData[targetContainer] = newData[targetContainer].filter(
+          (i) => i.id !== item.id,
+        );
+
+        newData[sourceContainer] = [...newData[sourceContainer], item];
+
+        return newData;
+      });
+    }
+
+    // ✅ reset refs
+    draggedItem.current = null;
+    draggedContainer.current = null;
   }
 
   return (
