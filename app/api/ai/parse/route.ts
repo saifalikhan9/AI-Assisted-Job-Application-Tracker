@@ -1,4 +1,5 @@
-import { getUserFromRequest } from "@/src/lib/auth";
+
+import { getUserFromRequest } from "@/lib/auth";
 import { parseJobDescription } from "@/src/services/ai/parseJD";
 
 import { NextRequest, NextResponse } from "next/server";

@@ -1,52 +1,9 @@
-import { Application, ApplicationStatus } from "@/prisma/generated/prisma/client";
-import { getUserFromRequest } from "@/src/lib/auth";
-import prisma from "@/src/lib/prisma";
+
+import { getUserFromRequest } from "@/lib/auth";
+import { groupByStatus } from "@/lib/helperFn";
+import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
-
-
-// 🧾 Create Application Request
-export interface CreateApplicationInput {
-  company: string;
-  role: string;
-
-  location?: string;
-  seniority?: string;
-
-  requiredSkills?: string[];
-  niceToHaveSkills?: string[];
-  suggestions?: string[];
-
-  jdLink?: string;
-  notes?: string;
-
-  salaryMin?: number;
-  salaryMax?: number;
-}
-
-// 📦 Grouped Kanban Response
-export type GroupedApplications<T> = {
-  [key in ApplicationStatus]: T[];
-};
-
-// 🧠 Helper to group applications by status
-function groupByStatus(
-    applications: Application[]
-  ): GroupedApplications<Application> {
-    const grouped: GroupedApplications<Application> = {
-      APPLIED: [],
-      PHONE_SCREEN: [],
-      INTERVIEW: [],
-      OFFER: [],
-      REJECTED: [],
-    };
-  
-    for (const app of applications) {
-      grouped[app.status].push(app);
-    }
-  
-    return grouped;
-  }
 
 // ✅ GET → Fetch applications (grouped for Kanban)
 export const GET = async (req: NextRequest) => {

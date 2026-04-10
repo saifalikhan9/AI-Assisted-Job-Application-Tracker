@@ -25,7 +25,7 @@ export function verifyToken(token: string) {
     return decoded;
   } catch (error) {
     console.error("JWT VERIFY ERROR:", error);
-    throw new Error("Invalid or expired token");
+    // throw new Error("Invalid or expired token");
   }
 }
 

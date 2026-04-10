@@ -1,7 +1,12 @@
-import { Login } from "@/components/auth/Login";
-import { Card } from "@/components/ui/card";
-import Image from "next/image";
+import DraggableCard from "@/components/dargNdrop/Drag-Drop";
+import MockData from "@/components/dargNdrop/mockdata";
 
 export default function Home() {
-  return <div>ai task</div>;
+  return (
+    <div>
+      ai task
+      {/* <DraggableCard /> */}
+      {/* <MockData /> */}
+    </div>
+  );
 }
