@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 export default function Page() {
@@ -26,6 +26,8 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const router = useRouter();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -33,7 +35,7 @@ export default function Page() {
     setError("");
 
     try {
-      const res = await fetch("/api/user", {
+      const res = await fetch("/api/users", {
         method: "POST",
         body: JSON.stringify(form),
         headers: {
@@ -48,10 +50,11 @@ export default function Page() {
         return;
       }
 
-    
-      redirect("dashboard");
+     
+      router.push("/dashboard");
     } catch (err) {
-      setError("Network error");
+      console.error(err); // 🔥 VERY IMPORTANT
+      setError("Something went wrong");
     } finally {
       setLoading(false);
     }
