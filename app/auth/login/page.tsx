@@ -14,10 +14,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
+
 import React, { useState } from "react";
 
 export default function Login() {
+  const router = useRouter();
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -48,10 +50,10 @@ export default function Login() {
         return;
       }
 
-   
-      redirect("dashboard");
+      router.push("/dashboard");
     } catch (err) {
-      setError("Network error");
+      console.error(err);
+      setError("Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -66,7 +68,12 @@ export default function Login() {
             Enter your email below to login to your account
           </CardDescription>
           <CardAction>
-            <Link href={"/auth/signup"} className={buttonVariants({variant:"link"})}>Sign Up</Link>
+            <Link
+              href={"/auth/signup"}
+              className={buttonVariants({ variant: "link" })}
+            >
+              Sign Up
+            </Link>
           </CardAction>
         </CardHeader>
 
