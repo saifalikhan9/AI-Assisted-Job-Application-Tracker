@@ -1,36 +1,164 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 AI-Assisted Job Application Tracker
 
-## Getting Started
+A full-stack web application to track job applications using a Kanban board, parse job descriptions using AI, and generate tailored resume bullet points.
 
-First, run the development server:
+---
+
+## ✨ Features
+
+* 🔐 Authentication (JWT-based)
+* 📊 Kanban board (Applied → Rejected flow)
+* 🤖 AI Job Description parsing
+* 📝 AI Resume bullet suggestions (streaming)
+* 🧩 Drag & Drop status updates
+* ✏️ Edit & Delete applications
+* ⚡ Optimistic UI updates
+
+---
+
+## 🛠️ Tech Stack
+
+* **Frontend:** Next.js, TypeScript, Tailwind CSS
+* **Backend:** Next.js API Routes
+* **Database:** PostgreSQL (Docker)
+* **ORM:** Prisma
+* **Auth:** JWT
+* **AI:** Mistral API
+* **Other:** React Markdown, shadcn/ui
+
+---
+
+## ⚙️ Setup Instructions
+
+### 1️⃣ Clone the Repository
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <your-repo-url>
+cd intern-task
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 2️⃣ Install Dependencies
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm install
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+### 3️⃣ Setup Environment Variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Create a `.env` file in the root:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/intern_task"
+JWT_SECRET="your_jwt_secret"
+MISTRAL_API_KEY="your_mistral_api_key"
+```
 
-## Deploy on Vercel
+👉 Also check `.env.sample` for reference.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 4️⃣ Start Database (Docker)
+
+```bash
+pnpm run db:start
+```
+
+---
+
+### 5️⃣ Run Prisma Migrations
+
+```bash
+npx prisma migrate dev
+```
+
+---
+
+### 6️⃣ Generate Prisma Client
+
+```bash
+npx prisma generate
+```
+
+---
+
+### 7️⃣ Seed the Database
+
+```bash
+pnpm run seed
+```
+
+👉 This creates:
+
+* Demo user
+* Sample job applications
+
+---
+
+### 8️⃣ Start the Development Server
+
+```bash
+pnpm run dev
+```
+
+---
+
+## 🔐 Demo Credentials
+
+```plaintext
+Email: test@example.com
+Password: password123
+```
+
+---
+
+## 🧪 How to Test
+
+1. Open: http://localhost:3000
+2. Login using demo credentials
+3. Explore the dashboard:
+
+   * Drag cards across columns
+   * Add new application (paste JD → AI parses it)
+   * Generate resume suggestions
+   * Edit / Delete cards
+
+---
+
+## 📦 Useful Commands
+
+```bash
+pnpm run dev        # Start dev server
+pnpm run db:start   # Start Docker DB
+pnpm run db:stop    # Stop DB
+pnpm run seed       # Seed database
+pnpm run db:reset   # Reset DB + reseed
+```
+
+---
+
+## 🧠 Key Decisions
+
+* Used **server-side auth checks** for security
+* Implemented **optimistic UI updates** for better UX
+* Used **streaming AI responses** for real-time suggestions
+* Structured code into **reusable components**
+
+---
+
+## 🚀 Future Improvements
+
+* Search & filter applications
+* Dashboard analytics
+* Follow-up reminders
+* Dark mode
+* Export to CSV
+
+---
+
+## 📄 License
+
+This project is for assessment purposes.
