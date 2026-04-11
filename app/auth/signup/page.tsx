@@ -53,7 +53,7 @@ export default function Page() {
      
       router.push("/dashboard");
     } catch (err) {
-      console.error(err); // 🔥 VERY IMPORTANT
+      console.error(err); 
       setError("Something went wrong");
     } finally {
       setLoading(false);

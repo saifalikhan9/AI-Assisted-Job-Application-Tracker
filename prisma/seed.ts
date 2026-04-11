@@ -43,7 +43,6 @@ const applications = [
 async function main() {
   console.log("🌱 Seeding database...");
 
-  // 🔐 Create user
   const hashedPassword = await bcrypt.hash("password123", 10);
 
   const user = await prisma.user.upsert({

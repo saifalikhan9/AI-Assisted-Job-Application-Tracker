@@ -19,7 +19,7 @@ export function verifyToken(token: string): { userId: string; email: string } | 
       userId?: string;
       email?: string;
     };
-    // Ensure both userId and email exist and are strings
+ 
     if (typeof decoded.userId === "string" && typeof decoded.email === "string") {
       return { userId: decoded.userId, email: decoded.email };
     }
