@@ -1,19 +1,13 @@
 "use client";
 import { Button } from "../ui/button";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Application } from "@/prisma/generated/prisma/client";
 import { GroupedApplications } from "@/src/types/applications";
 import { ParsedJD } from "@/src/types/parseJD";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Modal } from "../Modal";
+import { Trash2 } from "lucide-react";
+import { getErrorMessage } from "@/lib/helperFn";
 
 export default function KanbanMock({
   initialData,
@@ -22,19 +16,23 @@ export default function KanbanMock({
 }) {
   const router = useRouter();
   const draggedItem = useRef<Application | null>(null);
-  const draggedContainer = useRef<string | null>(null);
+  const draggedContainer = useRef<
+    keyof GroupedApplications<Application> | null
+  >(null);
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [JD, setJD] = useState("");
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [JD, setJD] = useState<string>("");
+  const [isEdit, setIsEdit] = useState(false);
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
   const [parsedData, setParsedData] = useState<ParsedJD | null>(null);
-  const [data, setData] = useState(initialData);
+  const [data, setData] =
+    useState<GroupedApplications<Application>>(initialData);
 
-  async function handleSubmit() {
-    if (!JD.trim()) {
-      setError("Please enter a job description");
+  async function handleSubmit(): Promise<void> {
+    if (!JD.trim() || JD.length < 50) {
+      setError("Please enter a valid job description");
       return;
     }
 
@@ -44,19 +42,18 @@ export default function KanbanMock({
     try {
       const res = await fetch("/api/ai/parse", {
         method: "POST",
-        body: JSON.stringify({ jd: JD }), // ✅ FIXED
+        body: JSON.stringify({ jd: JD }),
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // ✅ IMPORTANT (cookies auto sent)
+        credentials: "include",
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.message || "Something went wrong");
-        return;
+      const err = await getErrorMessage(res);
+      if (err) {
+        alert(err);
       }
+      const data = await res.json();
       setParsedData(data);
     } catch (err) {
       setError("Network error");
@@ -65,7 +62,7 @@ export default function KanbanMock({
     }
   }
 
-  async function handleSaveApplication() {
+  async function handleSaveApplication(): Promise<void> {
     setLoading(true);
     setError("");
     try {
@@ -78,10 +75,15 @@ export default function KanbanMock({
         credentials: "include",
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to save");
+      const err = await getErrorMessage(res);
+      if (err) {
+        alert(err);
+        return;
       }
+      alert("Application saved successfully ✅");
+
       router.refresh();
+      setIsOpen(false);
     } catch (error) {
       console.log(error);
       setError("Network Error");
@@ -94,42 +96,40 @@ export default function KanbanMock({
   function handleDragStart(
     e: React.DragEvent<HTMLDivElement>,
     item: Application,
-    status: string,
-  ) {
+    status: keyof GroupedApplications<Application>,
+  ): void {
     draggedItem.current = item;
     draggedContainer.current = status;
     e.currentTarget.style.opacity = "0.5";
   }
+
   function handleDragEnd(
     e: React.DragEvent<HTMLDivElement>,
-    item: Application,
-    status: string,
-  ) {
+    _item: Application,
+    _status: keyof GroupedApplications<Application>,
+  ): void {
     e.currentTarget.style.opacity = "1";
   }
 
   async function handleDrop(
     e: React.DragEvent<HTMLDivElement>,
     targetContainer: keyof GroupedApplications<Application>,
-  ) {
+  ): Promise<void> {
     e.preventDefault();
 
     const item = draggedItem.current;
-    const sourceContainer =
-      draggedContainer.current as keyof GroupedApplications<Application>;
+    const sourceContainer = draggedContainer.current;
 
     if (!item || !sourceContainer) return;
 
-    // ❗ prevent same column drop
     if (sourceContainer === targetContainer) {
       draggedItem.current = null;
       draggedContainer.current = null;
       return;
     }
 
-    // 🔥 optimistic UI update
     setData((prev) => {
-      const newData = { ...prev };
+      const newData: GroupedApplications<Application> = { ...prev };
 
       newData[sourceContainer] = newData[sourceContainer].filter(
         (i) => i.id !== item.id,
@@ -140,7 +140,6 @@ export default function KanbanMock({
       return newData;
     });
 
-    // 🔥 backend sync
     try {
       const res = await fetch(`/api/applications/${item.id}`, {
         method: "PATCH",
@@ -148,31 +147,111 @@ export default function KanbanMock({
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
       });
 
       if (!res.ok) {
         throw new Error("Failed to update");
       }
-      alert("success");
+      alert("Success");
     } catch (error) {
       console.error(error);
-      alert("failed to make api call");
+      alert("Failed to update status. Reverting changes.");
       setData((prev) => {
-        const newData = { ...prev };
+        const newData: GroupedApplications<Application> = { ...prev };
 
         newData[targetContainer] = newData[targetContainer].filter(
           (i) => i.id !== item.id,
         );
 
-        newData[sourceContainer] = [...newData[sourceContainer], item];
+        newData[sourceContainer!] = [...newData[sourceContainer!], item];
 
         return newData;
       });
     }
 
-    // ✅ reset refs
     draggedItem.current = null;
     draggedContainer.current = null;
+  }
+
+  function handleClickModal(item: ParsedJD | Application): void {
+    setIsOpen(true);
+    setIsEdit(true);
+    setParsedData(item as ParsedJD);
+  }
+
+  async function handleEditData(): Promise<void> {
+    setLoading(true);
+
+    try {
+      const res = await fetch(`/api/applications/${parsedData?.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ ...parsedData }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      const err = await getErrorMessage(res);
+
+      if (err) {
+        alert(err);
+        return;
+      }
+
+      alert("Application updated successfully ✅");
+
+      router.refresh();
+    } catch (error) {
+      alert("Network error. Please try again.");
+      console.error(error);
+    } finally {
+      setLoading(false);
+      setParsedData(null);
+      setIsOpen(false);
+      setIsEdit(false);
+    }
+  }
+
+  async function handleDelete(id: string): Promise<void> {
+    setLoading(true);
+
+    try {
+      const res = await fetch(`/api/applications/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      const err = await getErrorMessage(res);
+
+      if (err) {
+        alert(err);
+        return;
+      }
+
+      setData((prev) => {
+        const newData = { ...prev };
+
+        Object.keys(newData).forEach((key) => {
+          newData[key as keyof typeof newData] = newData[
+            key as keyof typeof newData
+          ].filter((item) => item.id !== id);
+        });
+
+        return newData;
+      });
+
+      alert("Application deleted successfully ✅");
+    } catch (error) {
+      alert("Network error. Please check your connection.");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -184,7 +263,12 @@ export default function KanbanMock({
         </Button>
       </nav>
       <div className=" text-balance grid grid-cols-5 gap-4 mt-6">
-        {Object.entries(data).map(([status, items]) => (
+        {(
+          Object.entries(data) as [
+            keyof GroupedApplications<Application>,
+            Application[],
+          ][]
+        ).map(([status, items]) => (
           <div
             onDrop={(e) => handleDrop(e, status)}
             onDragOver={(e) => {
@@ -204,14 +288,25 @@ export default function KanbanMock({
                 <p className="text-sm text-gray-600">No applications</p>
               )}
 
-              {items.map((item) => (
+              {items.map((item: Application) => (
                 <div
+                  onClick={() => handleClickModal(item)}
                   draggable
                   onDragStart={(e) => handleDragStart(e, item, status)}
                   onDragEnd={(e) => handleDragEnd(e, item, status)}
                   key={item.id}
-                  className="bg-yellow-500 rounded-lg p-3 shadow hover:shadow-md transition"
+                  className="bg-yellow-500 relative rounded-lg p-3 shadow hover:shadow-md transition"
                 >
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(item.id);
+                    }}
+                    variant={"ghost"}
+                    className="absolute  text-red-600 hover:text-black hover:bg-primary/20  bottom-0 right-0"
+                  >
+                    <Trash2 className="stroke-2" />
+                  </Button>
                   <p className="font-semibold ">{item.company}</p>
                   <p className="text-sm text-gray-800">{item.role}</p>
                   <p className="text-xs text-gray-600 mt-1">
@@ -225,131 +320,21 @@ export default function KanbanMock({
       </div>
 
       {isOpen && (
-        <div
-          onClick={() => {
-            setIsOpen(false);
-            setParsedData(null);
-            setJD("");
-          }}
-          className="fixed inset-0 w-full h-screen backdrop-blur-sm flex items-center justify-center"
-        >
-          <Card
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm"
-          >
-            <CardHeader>
-              <CardTitle>Add Job Description</CardTitle>
-              <CardAction
-                className="hover:bg-red-300 rounded-2xl p-1"
-                onClick={() => {
-                  setIsOpen(false);
-                  setParsedData(null);
-                  setJD("");
-                }}
-              >
-                close
-              </CardAction>
-            </CardHeader>
-
-            <CardContent className="space-y-3">
-              {/* 🔹 STEP 1: JD INPUT */}
-              {!parsedData && (
-                <>
-                  <Input
-                    value={JD}
-                    onChange={(e) => setJD(e.target.value)}
-                    placeholder="Paste your job description here"
-                  />
-
-                  {error && <p className="text-sm text-red-500">{error}</p>}
-                </>
-              )}
-
-              {/* 🔹 STEP 2: EDITABLE PARSED DATA */}
-              {parsedData && (
-                <div className="space-y-3">
-                  <Input
-                    value={parsedData.company}
-                    placeholder="Company"
-                    onChange={(e) =>
-                      setParsedData({ ...parsedData, company: e.target.value })
-                    }
-                  />
-
-                  <Input
-                    value={parsedData.role}
-                    placeholder="Role"
-                    onChange={(e) =>
-                      setParsedData({ ...parsedData, role: e.target.value })
-                    }
-                  />
-
-                  <Input
-                    value={parsedData.location}
-                    placeholder="Location"
-                    onChange={(e) =>
-                      setParsedData({ ...parsedData, location: e.target.value })
-                    }
-                  />
-
-                  <Input
-                    value={parsedData.seniority}
-                    placeholder="Seniority"
-                    onChange={(e) =>
-                      setParsedData({
-                        ...parsedData,
-                        seniority: e.target.value,
-                      })
-                    }
-                  />
-
-                  {/* Skills (simple input for now) */}
-                  <Input
-                    value={parsedData.requiredSkills.join(", ")}
-                    placeholder="Required Skills (comma separated)"
-                    onChange={(e) =>
-                      setParsedData({
-                        ...parsedData,
-                        requiredSkills: e.target.value
-                          .split(",")
-                          .map((s) => s.trim()),
-                      })
-                    }
-                  />
-
-                  <Input
-                    value={parsedData.niceToHaveSkills.join(", ")}
-                    placeholder="Nice to Have Skills"
-                    onChange={(e) =>
-                      setParsedData({
-                        ...parsedData,
-                        niceToHaveSkills: e.target.value
-                          .split(",")
-                          .map((s) => s.trim()),
-                      })
-                    }
-                  />
-                </div>
-              )}
-            </CardContent>
-
-            <CardFooter>
-              {!parsedData ? (
-                <Button
-                  onClick={handleSubmit}
-                  className="w-full"
-                  disabled={loading}
-                >
-                  {loading ? "Parsing..." : "Parse JD"}
-                </Button>
-              ) : (
-                <Button onClick={handleSaveApplication} className="w-full">
-                  Save Application
-                </Button>
-              )}
-            </CardFooter>
-          </Card>
-        </div>
+        <Modal
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
+          JD={JD}
+          setJD={setJD}
+          loading={loading}
+          error={error}
+          parsedData={parsedData}
+          setParsedData={setParsedData}
+          handleSubmit={handleSubmit}
+          handleSaveApplication={handleSaveApplication}
+          isEdit={isEdit}
+          handleEditData={handleEditData}
+          setIsEdit={setIsEdit}
+        />
       )}
     </>
   );

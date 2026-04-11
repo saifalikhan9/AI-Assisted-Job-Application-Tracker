@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-
 import { getUserFromRequest } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
 export const PATCH = async (
   req: NextRequest,
-  ctx: RouteContext<"/api/applications/[id]">,
+  { params }: { params: Promise<{ id: string }> },
 ) => {
   try {
-    // ✅ Auth check
     const decoded = await getUserFromRequest(req);
 
     if (!decoded) {
@@ -16,26 +14,44 @@ export const PATCH = async (
     }
 
     const { userId } = decoded;
-    
 
-    // ✅ Get ID
-    const { id } = await ctx.params
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json({ message: "Invalid ID" }, { status: 400 });
     }
 
-    // ✅ Get body
-    const { status } = await req.json();
+    const body = await req.json();
 
-    if (!status) {
+    const {
+      status,
+      company,
+      role,
+      seniority,
+      location,
+      requiredSkills,
+      niceToHaveSkills,
+      notes,
+      salary,
+    } = body;
+
+    if (
+      !status &&
+      !company &&
+      !role &&
+      !seniority &&
+      !location &&
+      !requiredSkills &&
+      !niceToHaveSkills &&
+      !notes &&
+      !salary
+    ) {
       return NextResponse.json(
-        { message: "Status is required" },
+        { message: "No fields provided to update" },
         { status: 400 },
       );
     }
 
-    // ✅ Check ownership (VERY IMPORTANT)
     const existing = await prisma.application.findUnique({
       where: { id },
     });
@@ -47,10 +63,19 @@ export const PATCH = async (
       );
     }
 
-    // ✅ Update status
     const updated = await prisma.application.update({
       where: { id },
-      data: { status },
+      data: {
+        ...(status && { status }),
+        ...(company && { company }),
+        ...(role && { role }),
+        ...(seniority && { seniority }),
+        ...(location && { location }),
+        ...(requiredSkills && { requiredSkills }),
+        ...(niceToHaveSkills && { niceToHaveSkills }),
+        ...(notes && { notes }),
+        ...(salary && { salary }),
+      },
     });
 
     return NextResponse.json(updated, { status: 200 });
@@ -60,6 +85,60 @@ export const PATCH = async (
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 },
+    );
+  }
+};
+
+export const DELETE = async (
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) => {
+  try {
+    const decoded = await getUserFromRequest(req);
+
+    if (!decoded || !decoded.userId) {
+      return NextResponse.json(
+        { message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const { id } = await params;
+
+    if (!id) {
+      return NextResponse.json(
+        { message: "Invalid ID" },
+        { status: 400 }
+      );
+    }
+
+    const existing = await prisma.application.findUnique({
+      where: { id },
+    });
+
+    if (!existing || existing.userId !== decoded.userId) {
+      return NextResponse.json(
+        { message: "Not found or unauthorized" },
+        { status: 404 }
+      );
+    }
+
+
+    await prisma.application.delete({
+      where: { id },
+    });
+
+    return NextResponse.json(
+      { message: "Deleted successfully" },
+      { status: 200 }
+    );
+
+  } catch (error) {
+    console.error("failed to delete", error);
+
+    return NextResponse.json(
+      { message: "Something went wrong" },
+      { status: 500 }
     );
   }
 };

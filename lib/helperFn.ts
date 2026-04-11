@@ -18,3 +18,11 @@ export function groupByStatus(
 
   return grouped;
 }
+
+export async function getErrorMessage(res: Response): Promise<string | null> {
+  if (!res.ok) {
+    const data = await res.json();
+    return data?.message || "Something went wrong. Please try again.";
+  }
+  return null;
+}

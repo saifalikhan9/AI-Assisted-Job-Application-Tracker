@@ -2,6 +2,7 @@
 import { getUserFromRequest } from "@/lib/auth";
 import { groupByStatus } from "@/lib/helperFn";
 import prisma from "@/lib/prisma";
+import { CreateApplicationInput } from "@/src/types/applications";
 import { NextRequest, NextResponse } from "next/server";
 
 
