@@ -28,12 +28,14 @@ A full-stack web application to track job applications using a Kanban board, par
 
 ---
 
+## Live Link : https://ai-assisted-job-application-tracker-hazel.vercel.app
+
 ## ⚙️ Setup Instructions
 
 ### 1️⃣ Clone the Repository
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/saifalikhan9/AI-Assisted-Job-Application-Tracker
 cd intern-task
 ```
 
