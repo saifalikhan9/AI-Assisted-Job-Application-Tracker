@@ -6,7 +6,7 @@ import { ParsedJD } from "@/src/types/parseJD";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "../Modal";
-import { Plus, Trash2 } from "lucide-react";
+import { LogOut, Plus, Trash2 } from "lucide-react";
 import { getErrorMessage } from "@/lib/helperFn";
 import { SuggestionsModal } from "../SuggestionsModal";
 
@@ -256,6 +256,25 @@ export default function KanbanMock({
     }
   }
 
+  async function handleLogout() {
+    console.log("here");
+
+    try {
+      const res = await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+
+      if (!res.ok) {
+        throw new Error("something went wrong");
+      }
+      alert("Logged out");
+    } catch (error) {
+      alert("something went wrong check the logs");
+      console.error(error);
+    } finally {
+      router.refresh();
+    }
+  }
   return (
     <>
       <nav className="flex  items-center justify-between border-b py-4">
@@ -266,6 +285,9 @@ export default function KanbanMock({
           </Button>
           <Button onClick={() => setIsOpen(true)} variant={"secondary"}>
             <Plus />
+          </Button>
+          <Button onClick={() => handleLogout()} variant={"destructive"}>
+            <LogOut />
           </Button>
         </div>
       </nav>
