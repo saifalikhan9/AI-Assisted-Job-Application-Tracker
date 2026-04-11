@@ -18,7 +18,7 @@ enum ApplicationStatus {
 model User {
   id       String @id @default(uuid())
   email    String @unique
-  password String // hashed using bcrypt
+  password String 
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -29,31 +29,31 @@ model User {
 model Application {
   id String @id @default(uuid())
 
-  // 🔗 Relation
+  
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // 🧾 Basic Info
+  
   company   String
   role      String
   location  String?
   seniority String?
 
-  // 🤖 AI Extracted
+  
   requiredSkills   String[]
   niceToHaveSkills String[]
 
-  // ✨ AI Suggestions
+  
   suggestions String[]
 
-  // 📝 Manual Fields
+  
   jdLink String?
   notes  String?
 
   salaryMin Int?
   salaryMax Int?
 
-  // 📊 Kanban Status
+  
   status ApplicationStatus @default(APPLIED)
 
   appliedAt DateTime?

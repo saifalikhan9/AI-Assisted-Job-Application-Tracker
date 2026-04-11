@@ -6,7 +6,7 @@ import { CreateApplicationInput } from "@/src/types/applications";
 import { NextRequest, NextResponse } from "next/server";
 
 
-// ✅ GET → Fetch applications (grouped for Kanban)
+
 export const GET = async (req: NextRequest) => {
   try {
     const decoded = await getUserFromRequest(req);
@@ -38,7 +38,7 @@ export const GET = async (req: NextRequest) => {
   }
 };
 
-// ✅ POST → Create application
+
 export const POST = async (req: NextRequest) => {
   try {
     const decoded = await getUserFromRequest(req);
@@ -67,7 +67,6 @@ export const POST = async (req: NextRequest) => {
       salaryMax,
     } = body;
 
-    // 🔴 Validation
     if (!company || !role) {
       return NextResponse.json(
         { message: "Company and role are required" },
@@ -75,7 +74,7 @@ export const POST = async (req: NextRequest) => {
       );
     }
 
-    // 🧠 Normalize AI fields (important)
+   
     const safeRequiredSkills = Array.isArray(requiredSkills)
       ? requiredSkills
       : [];

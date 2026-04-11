@@ -2,7 +2,6 @@ import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 
-// 🔐 Sign JWT
 export function signToken(payload: { userId: string; email: string }) {
   try {
     return jwt.sign(payload, JWT_SECRET, {
@@ -14,18 +13,20 @@ export function signToken(payload: { userId: string; email: string }) {
   }
 }
 
-// 🔍 Verify JWT
-export function verifyToken(token: string) {
+export function verifyToken(token: string): { userId: string; email: string } | null {
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as {
-      userId: string;
-      email: string;
+      userId?: string;
+      email?: string;
     };
-
-    return decoded;
+    // Ensure both userId and email exist and are strings
+    if (typeof decoded.userId === "string" && typeof decoded.email === "string") {
+      return { userId: decoded.userId, email: decoded.email };
+    }
+    return null;
   } catch (error) {
     console.error("JWT VERIFY ERROR:", error);
-    // throw new Error("Invalid or expired token");
+    return null;
   }
 }
 
@@ -44,6 +45,7 @@ export async function getUserFromRequest(
     if (!token) return null;
 
     const decoded = verifyToken(token);
+    if (!decoded) return null;
     return decoded;
   } catch {
     return null;

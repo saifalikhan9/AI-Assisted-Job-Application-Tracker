@@ -1,37 +1,60 @@
-import { getUserFromRequest } from "@/src/lib/auth";
 import { ParsedJD } from "@/src/types/parseJD";
-import { getSuggestions } from "@/src/services/ai/suggestions";
-import { NextRequest, NextResponse } from "next/server";
+import { getSuggestionsStream } from "@/src/services/ai/suggestions";
+import { NextRequest } from "next/server";
+import { getUserFromRequest } from "@/lib/auth";
 
 export const POST = async (req: NextRequest) => {
   try {
     const decoded = await getUserFromRequest(req);
 
     if (!decoded) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return new Response("Unauthorized", { status: 401 });
     }
 
     const body: ParsedJD = await req.json();
     const { role, requiredSkills } = body;
 
     if (!role && (!requiredSkills || requiredSkills.length === 0)) {
-      return NextResponse.json(
-        {
-          message: "Insufficient data to generate suggestions",
-        },
-        { status: 400 },
-      );
+      return new Response("Insufficient data to generate suggestions", {
+        status: 400,
+      });
     }
 
-    const suggestions = await getSuggestions(body);
 
-    return NextResponse.json({ suggestions }, { status: 200 });
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          const encoder = new TextEncoder();
+
+          const aiStream = await getSuggestionsStream(body);
+
+          for await (const chunk of aiStream) {
+            const text = chunk.data.choices[0].delta.content || "";
+
+            if (text) {
+              controller.enqueue(encoder.encode(text as string));
+            }
+          }
+
+          controller.close();
+        } catch (error) {
+          console.error("STREAM ERROR:", error);
+          controller.error(error);
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-cache",
+      },
+    });
   } catch (error) {
     console.error("SUGGESTIONS ROUTE ERROR:", error);
 
-    return NextResponse.json(
-      { message: "Failed to generate suggestions" },
-      { status: 500 },
-    );
+    return new Response("Failed to generate suggestions", {
+      status: 500,
+    });
   }
 };

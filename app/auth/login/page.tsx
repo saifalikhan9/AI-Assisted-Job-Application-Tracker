@@ -48,7 +48,7 @@ export default function Login() {
         return;
       }
 
-      // ✅ Redirect after login
+   
       redirect("dashboard");
     } catch (err) {
       setError("Network error");

@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import prisma from "@/src/lib/prisma";
-import { signToken } from "@/src/lib/auth";
-
+import prisma from "@/lib/prisma";
+import { signToken } from "@/lib/auth";
 
 
 const cookieOptions = {

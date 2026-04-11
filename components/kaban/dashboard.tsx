@@ -6,8 +6,9 @@ import { ParsedJD } from "@/src/types/parseJD";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "../Modal";
-import { Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { getErrorMessage } from "@/lib/helperFn";
+import { SuggestionsModal } from "../SuggestionsModal";
 
 export default function KanbanMock({
   initialData,
@@ -21,6 +22,7 @@ export default function KanbanMock({
   >(null);
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [suggestionsModal, setSuggestionsModal] = useState(false);
   const [JD, setJD] = useState<string>("");
   const [isEdit, setIsEdit] = useState(false);
 
@@ -258,9 +260,14 @@ export default function KanbanMock({
     <>
       <nav className="flex  items-center justify-between border-b py-4">
         <h2>Kaban Board</h2>
-        <Button onClick={() => setIsOpen(true)} variant={"secondary"}>
-          Add Application
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setSuggestionsModal(true)}>
+            Get Suggestions
+          </Button>
+          <Button onClick={() => setIsOpen(true)} variant={"secondary"}>
+            <Plus />
+          </Button>
+        </div>
       </nav>
       <div className=" text-balance grid grid-cols-5 gap-4 mt-6">
         {(
@@ -334,6 +341,12 @@ export default function KanbanMock({
           isEdit={isEdit}
           handleEditData={handleEditData}
           setIsEdit={setIsEdit}
+        />
+      )}
+      {suggestionsModal && (
+        <SuggestionsModal
+          setSuggestionsModal={setSuggestionsModal}
+          suggestionsModal={suggestionsModal}
         />
       )}
     </>

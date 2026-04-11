@@ -48,7 +48,7 @@ export default function Page() {
         return;
       }
 
-      // ✅ Redirect after Sign Up
+    
       redirect("dashboard");
     } catch (err) {
       setError("Network error");

@@ -5,15 +5,15 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
 
   const isAuthPage =
-    request.nextUrl.pathname.startsWith("/login") ||
-    request.nextUrl.pathname.startsWith("/register");
+    request.nextUrl.pathname.startsWith("/auth/login") ||
+    request.nextUrl.pathname.startsWith("/auth/signup");
 
   const isProtectedRoute =
     request.nextUrl.pathname.startsWith("/dashboard");
 
   
   if (!token && isProtectedRoute) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
  
@@ -25,5 +25,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/"],
+  matcher: [ "/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };
